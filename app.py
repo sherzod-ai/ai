@@ -201,9 +201,15 @@ def target_encode_splits(X_train, y_train, X_val, X_test, cat_cols, n_folds=5, s
     X_val_e = X_val.copy() if X_val is not None else None
     X_test_e = X_test.copy() if X_test is not None else None
 
-    y_train = y_train.reset_index(drop=True)
+    # Xavfsizlik: y_train string bo'lsa (masalan "Yes"/"No") sonlashtiramiz
+    # Pandas 2.x StringDtype yoki object dtype bo'lsa ham ishlaydi
+    y_train = pd.Series(y_train).reset_index(drop=True)
+    if not pd.api.types.is_numeric_dtype(y_train):
+        y_train, _ = pd.factorize(y_train)
+        y_train = pd.Series(y_train)
+
     X_train_idx_reset = X_train.reset_index(drop=True)
-    global_mean = y_train.mean()
+    global_mean = float(y_train.mean())
 
     for col in cat_cols:
         # 1) Train uchun out-of-fold encoding
@@ -272,7 +278,8 @@ def run_encoding_pipeline(df, target_col, cat_cols, num_cols, encoding_method,
     y = df[target_col].copy()
 
     # Target encode label uchun
-    if y.dtype == object or y.dtype.name == "category":
+    # Barcha string dtype larni handle qilamiz (object, StringDtype, category)
+    if not pd.api.types.is_numeric_dtype(y):
         y, _ = pd.factorize(y)
         y = pd.Series(y)
 
@@ -815,8 +822,15 @@ elif section.startswith("7."):
     else:
         df = st.session_state.df_current
         target = st.session_state.target_col
-        cat_cols = [c for c in st.session_state.categorical_cols if c in df.columns and c != target]
+        cat_cols_all = [c for c in st.session_state.categorical_cols if c in df.columns and c != target]
         num_cols = [c for c in st.session_state.numeric_cols if c in df.columns and c != target]
+
+        # customerID kabi yuqori kardinallik (ID) ustunlarni olib tashlaymiz
+        id_threshold = max(10, int(len(df) * 0.5))
+        id_cols = [c for c in cat_cols_all if df[c].nunique() >= id_threshold]
+        cat_cols = [c for c in cat_cols_all if c not in id_cols]
+        if id_cols:
+            st.info(f"⚠️ ID ustunlar (encoding uchun o'tkazildi): {', '.join(id_cols)}")
 
         st.subheader("Encoding usulini tanlang")
         method = st.selectbox("Usul:", ["Label Encoding", "One-Hot Encoding", "Frequency Encoding", "Target Encoding"])
@@ -829,7 +843,8 @@ elif section.startswith("7."):
             if st.button("Encoding qo'llash"):
                 X = df[num_cols + cat_cols].copy()
                 y = df[target].copy()
-                if y.dtype == object or y.dtype.name == "category":
+                # Pandas 2.x: StringDtype, object, category hammasini numeric ga o'giramiz
+                if not pd.api.types.is_numeric_dtype(y):
                     y, _ = pd.factorize(y)
                     y = pd.Series(y)
 
