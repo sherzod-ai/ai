@@ -1011,7 +1011,7 @@ elif section.startswith("9."):
 # =====================================================================
 elif section.startswith("10."):
     st.header("10. Encoding usullarini taqqoslash")
-    info("4 ta encoding usulini bir xil splitda, bir xil modelda (Random Forest) sinab, natijalarni taqqoslaymiz. Bu — loyihaning markaziy hissasi.")
+    info("4 ta encoding usulini bir xil splitda, bir xil modelda (Random Forest) sinab, natijalarni taqqoslaymiz. Bu — loyihaning asosiy qismi hisoblanadi")
 
     if st.session_state.df_current is None or st.session_state.target_col is None:
         warn_box("Avval dataset yuklang va target ustunni tanlang.")
