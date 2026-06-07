@@ -120,9 +120,6 @@ streamlit-app/
 └── README.md           # Bu fayl
 ```
 
-> Kelgusi bosqichda kod modullarga ajratilishi mumkin:
-> `utils/preprocessing.py`, `utils/encoding.py`, `utils/modeling.py`, `utils/visualization.py`
-
 ---
 
 ## Litsenziya va foydalanish
