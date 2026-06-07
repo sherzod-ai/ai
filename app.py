@@ -116,8 +116,19 @@ init_state()
 # HELPER: detect column types
 # =====================================================================
 def detect_column_types(df: pd.DataFrame):
-    numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+    """
+    Sonli va kategoriyali ustunlarni aniqlaydi.
+    MUHIM: Faqat 2 ta noyob qiymatga ega sonli ustunlar (masalan SeniorCitizen 0/1)
+    avtomatik ravishda kategoriyali sifatida belgilanadi.
+    """
+    raw_numeric = df.select_dtypes(include=[np.number]).columns.tolist()
     categorical_cols = df.select_dtypes(include=["object", "category", "bool"]).columns.tolist()
+    numeric_cols = []
+    for col in raw_numeric:
+        if df[col].nunique() <= 2:
+            categorical_cols.append(col)  # binary flag (0/1) -> kategoriyali
+        else:
+            numeric_cols.append(col)
     return numeric_cols, categorical_cols
 
 
